@@ -4,19 +4,55 @@ import { POKEMONS_PER_PAGE } from '../../app/config';
 
 export const getPokemons = createAsyncThunk('pokemons/getPokemons', async ({ page, search, type }, { rejectWithValue }) => {
     try {
-        let url = `/pokemons?page=${page}&limit=${POKEMONS_PER_PAGE}`;
-        if (search) url += `&search=${search}`;
-        if (type) url += `&type=${type}`;
+        console.log('Getting pokemons with params:', { page, search, type });
+        
+        let url;
+        
+        // Nếu có type, sử dụng endpoint lọc theo type
+        if (type) {
+            url = `/pokemons/type/${type}`;
+            console.log('Using type endpoint:', url);
+        }
+        // Nếu có search, sử dụng endpoint tìm kiếm theo tên
+        else if (search) {
+            url = `/pokemons/search?name=${search}`;
+            console.log('Using search endpoint:', url);
+        }
+        // Mặc định: lấy tất cả Pokémon với phân trang
+        else {
+            url = `/pokemons?page=${page}&limit=${POKEMONS_PER_PAGE}`;
+            console.log('Using default endpoint:', url);
+        }
+        
+        // Gọi API
+        console.log('Calling API at:', url);
         const response = await apiService.get(url);
+        console.log('Raw API response:', response);
+        
+        // Thêm delay để UI hiển thị loading state
         const timeout = () => {
             return new Promise((resolve) => {
                 setTimeout(() => {
                     resolve('ok');
-                }, 1000);
+                }, 500); // Giảm thời gian chờ để UX tốt hơn
             });
         };
         await timeout();
-        return response.data;
+        
+        // Xử lý các loại response khác nhau
+        let result = [];
+        
+        // Nếu response là object với thuộc tính data (endpoint /pokemons)
+        if (response && typeof response === 'object' && response.data) {
+            result = response.data;
+        }
+        // Nếu response là mảng trực tiếp (endpoint /search và /type/:type)
+        else if (Array.isArray(response)) {
+            result = response;
+        }
+        
+        console.log('Processed API Result:', result);
+        return result || [];
     } catch (error) {
         return rejectWithValue(error);
     }
@@ -100,6 +136,11 @@ export const pokemonSlice = createSlice({
         [getPokemons.pending]: (state, action) => {
             state.loading = true;
             state.errorMessage = '';
+            
+            // Nếu đang tìm kiếm hoặc lọc theo type và là trang đầu tiên, reset danh sách pokemons
+            if ((state.search || state.type) && state.page === 1) {
+                state.pokemons = [];
+            }
         },
         [getPokemonById.pending]: (state) => {
             state.loading = true;

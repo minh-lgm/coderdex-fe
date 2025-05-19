@@ -20,7 +20,10 @@ export const DetailPage = () => {
 	const { id } = useParams();
 	const dispatch = useDispatch();
 	useEffect(() => {
-		dispatch(getPokemonById(id));
+		// Chỉ gọi API khi id là một giá trị hợp lệ
+		if (id) {
+			dispatch(getPokemonById(id));
+		}
 	}, [id, dispatch]);
 
 	const weaknesses = calculateWeaknesses(pokemon?.types);
@@ -172,7 +175,9 @@ const weaknesses = {
 };
 
 const calculateWeaknesses = (types) => {
-	if (!types) return [];
+	// Nếu không có types hoặc types không phải là mảng, trả về mảng rỗng
+	if (!types || !Array.isArray(types)) return [];
+	
 	let total = {
 		normal: 0,
 		fire: 0,
@@ -195,10 +200,28 @@ const calculateWeaknesses = (types) => {
 	};
 
 	types.forEach((type) => {
-		weaknesses[type].weak.forEach((t) => total[t]++);
-		weaknesses[type].resistant.forEach((t) => total[t]--);
-		weaknesses[type].nullified.forEach((t) => total[t]--);
+		// Chuyển đổi kiểu thành chữ thường để khớp với các khóa trong object weaknesses
+		const typeLower = type.toLowerCase();
+		
+		// Kiểm tra xem kiểu có tồn tại trong object weaknesses không
+		if (weaknesses[typeLower]) {
+			// Thêm độ yếu
+			if (Array.isArray(weaknesses[typeLower].weak)) {
+				weaknesses[typeLower].weak.forEach((t) => total[t]++);
+			}
+			
+			// Thêm kháng tính
+			if (Array.isArray(weaknesses[typeLower].resistant)) {
+				weaknesses[typeLower].resistant.forEach((t) => total[t]--);
+			}
+			
+			// Thêm miễn nhiễm
+			if (Array.isArray(weaknesses[typeLower].nullified)) {
+				weaknesses[typeLower].nullified.forEach((t) => total[t]--);
+			}
+		}
 	});
+	
 	let final = [];
 	Object.keys(total).forEach((type) => {
 		if (total[type] > 0) final.push(type);

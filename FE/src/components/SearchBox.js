@@ -78,7 +78,20 @@ export const SearchBox = () => {
                         <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
                             <Stack direction="row" alignItems="center" spacing={2}>
                                 <FTextField name="search" sx={styles.inputText} />
-                                <SearchOutlined sx={styles.icon} />
+                                <Box 
+                                    component="button" 
+                                    type="submit" 
+                                    sx={{
+                                        ...styles.icon,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        border: 'none'
+                                    }}
+                                >
+                                    <SearchOutlined />
+                                </Box>
                             </Stack>
                         </FormProvider>
                         <Typography>Use the Advanced Search to explore Pokémon by type, weakness, Ability, and more!</Typography>
